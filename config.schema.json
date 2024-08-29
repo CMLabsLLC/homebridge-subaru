@@ -1,5 +1,5 @@
 {
-  "pluginAlias": "ExampleHomebridgePlugin",
+  "pluginAlias": "SubaruHomebridgePlugin",
   "pluginType": "platform",
   "singular": true,
   "schema": {
