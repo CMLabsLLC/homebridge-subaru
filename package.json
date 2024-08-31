@@ -27,7 +27,8 @@
     "build": "rimraf ./dist && tsc",
     "lint": "eslint . --max-warnings=0",
     "prepublishOnly": "npm run lint && npm run build",
-    "watch": "npm run build && npm link && nodemon"
+    "watch": "npm run build && npm link && nodemon",
+    "installLocal": "npm run prepublishOnly && npm link && homebridge -I -D"
   },
   "devDependencies": {
     "@eslint/js": "^9.9.0",
