@@ -1,6 +1,6 @@
 import type { API } from 'homebridge';
 
-import { SubaruHomebridgePlatform } from './platform.js';
+import { SubaruHomebridgePlatform } from './subaruHomebridgePlatform.js';
 import { PLATFORM_NAME } from './settings.js';
 
 /**

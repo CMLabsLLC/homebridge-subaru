@@ -1,6 +1,6 @@
 import type { CharacteristicValue, PlatformAccessory, Service } from 'homebridge';
 
-import type { SubaruHomebridgePlatform } from './platform.js';
+import type { SubaruHomebridgePlatform } from './subaruHomebridgePlatform.js';
 
 /**
  * Platform Accessory
