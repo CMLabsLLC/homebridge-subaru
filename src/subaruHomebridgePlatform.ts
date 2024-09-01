@@ -1,9 +1,10 @@
 import { API, Characteristic, DynamicPlatformPlugin, Logging, PlatformAccessory, PlatformConfig, Service } from 'homebridge';
+import { SubaruAPI } from './subaruAPI.js';
 
 // import { SubaruPlatformLockAccessory } from './subaruPlatformLockAccessory.js';
 // import { PLATFORM_NAME, PLUGIN_NAME } from './settings.js';
 
-interface SubaruHomebridgePlatformConfig extends PlatformConfig {
+export interface SubaruHomebridgePlatformConfig extends PlatformConfig {
   username?: string;
   password?: string;
   lastSelectedVehicleKey?: string;
@@ -19,6 +20,7 @@ interface SubaruHomebridgePlatformConfig extends PlatformConfig {
 export class SubaruHomebridgePlatform implements DynamicPlatformPlugin {
   public readonly Service: typeof Service;
   public readonly Characteristic: typeof Characteristic;
+  public readonly subaruAPI: SubaruAPI;
 
   // this is used to track restored cached accessories
   public readonly accessories: PlatformAccessory[] = [];
@@ -51,6 +53,8 @@ export class SubaruHomebridgePlatform implements DynamicPlatformPlugin {
       this.log.error('Missing required config value: pin');
     }
 
+    this.subaruAPI = new SubaruAPI(this.config);
+
     this.log.debug('Finished initializing platform:', this.config.name);
 
     // When this event is fired it means Homebridge has restored all cached accessories from disk.
@@ -80,7 +84,9 @@ export class SubaruHomebridgePlatform implements DynamicPlatformPlugin {
    * Accessories must only be registered once, previously created accessories
    * must not be registered again to prevent "duplicate UUID" errors.
    */
-  discoverDevices() {
+  async discoverDevices() {
+    const response = await this.subaruAPI.lock();
+    this.log.debug('lock response %d', response.status);
     // EXAMPLE ONLY
     // A real plugin you would discover accessories from the local network, cloud services
     // or a user-defined array in the platform config.

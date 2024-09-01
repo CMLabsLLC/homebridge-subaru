@@ -30,6 +30,10 @@
     "watch": "npm run build && npm link && nodemon",
     "installLocal": "npm run prepublishOnly && npm link && homebridge -I -D"
   },
+  "dependencies": {
+    "axios": "~1.7",
+    "simple-oauth2": "~5.1"
+  },
   "devDependencies": {
     "@eslint/js": "^9.9.0",
     "@types/eslint__js": "^8.42.3",
