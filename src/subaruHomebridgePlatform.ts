@@ -3,6 +3,14 @@ import type { API, Characteristic, DynamicPlatformPlugin, Logging, PlatformAcces
 import { SubaruPlatformLockAccessory } from './platformAccessory.js';
 import { PLATFORM_NAME, PLUGIN_NAME } from './settings.js';
 
+interface SubaruHomebridgePlatformConfig extends PlatformConfig {
+  username?: string;
+  password?: string;
+  lastSelectedVehicleKey?: string;
+  deviceId?: string;
+  pin?: string;
+}
+
 /**
  * HomebridgePlatform
  * This class is the main constructor for your plugin, this is where you should
@@ -17,11 +25,31 @@ export class SubaruHomebridgePlatform implements DynamicPlatformPlugin {
 
   constructor(
     public readonly log: Logging,
-    public readonly config: PlatformConfig,
+    public readonly config: SubaruHomebridgePlatformConfig,
     public readonly api: API,
   ) {
     this.Service = api.hap.Service;
     this.Characteristic = api.hap.Characteristic;
+
+    if (!config.username) {
+      this.log.error('Missing required config value: username');
+    }
+
+    if (!config.password) {
+      this.log.error('Missing required config value: password');
+    }
+
+    if (!config.lastSelectedVehicleKey) {
+      this.log.error('Missing required config value: lastSelectedVehicleKey');
+    }
+
+    if (!config.deviceId) {
+      this.log.error('Missing required config value: deviceId');
+    }
+
+    if (!config.pin) {
+      this.log.error('Missing required config value: pin');
+    }
 
     this.log.debug('Finished initializing platform:', this.config.name);
 

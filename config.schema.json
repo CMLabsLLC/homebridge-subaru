@@ -5,11 +5,30 @@
   "schema": {
     "type": "object",
     "properties": {
-      "name": {
-        "title": "Name",
+      "username": {
+        "title": "username",
         "type": "string",
-        "required": true,
-        "default": "Example Dynamic Platform"
+        "required": true
+      },
+      "password": {
+        "title": "password",
+        "type": "string",
+        "required": true
+      },
+      "lastSelectedVehicleKey": {
+        "title": "lastSelectedVehicleKey",
+        "type": "string",
+        "required": true
+      },
+      "deviceId": {
+        "title": "deviceId",
+        "type": "string",
+        "required": true
+      },
+      "pin": {
+        "title": "pin",
+        "type": "string",
+        "required": true
       }
     }
   }
