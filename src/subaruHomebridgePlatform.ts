@@ -64,11 +64,13 @@ export class SubaruHomebridgePlatform implements DynamicPlatformPlugin {
     this.accessories.push(accessory);
   }
 
-  async discoverDevices() {
-    const response = await this.subaruAPI.lock();
-    this.log.debug('lock response %d', response.status);
+  public serviceUUID() {
+    const hash = Md5.hashStr(this.config.username || '' + this.config.deviceId || '' + this.config.lastSelectedVehicleKey || '');
+    return this.api.hap.uuid.generate(hash);
+  }
 
-    const uuid = Md5.hashStr(this.config.username || '' + this.config.deviceId || '' + this.config.lastSelectedVehicleKey || '');
+  async discoverDevices() {
+    const uuid = this.serviceUUID();
 
     const existingAccessory = this.accessories.find(accessory => accessory.UUID === uuid);
 
