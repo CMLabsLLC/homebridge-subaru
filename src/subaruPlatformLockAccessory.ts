@@ -1,4 +1,4 @@
-import type { CharacteristicValue, PlatformAccessory, Service, Logging } from 'homebridge';
+import { CharacteristicValue, PlatformAccessory, Service, Logging } from 'homebridge';
 
 import type { SubaruHomebridgePlatform } from './subaruHomebridgePlatform.js';
 
@@ -9,21 +9,17 @@ import type { SubaruHomebridgePlatform } from './subaruHomebridgePlatform.js';
  */
 export class SubaruPlatformLockAccessory {
   private service: Service;
+  private currentKnownState: CharacteristicValue;
 
   constructor(
     private readonly platform: SubaruHomebridgePlatform,
     private readonly accessory: PlatformAccessory,
     public readonly log: Logging,
   ) {
-    // set accessory information
-    // TODO
-    this.accessory.getService(this.platform.Service.AccessoryInformation)!
-      .setCharacteristic(this.platform.Characteristic.Manufacturer, 'Default-Manufacturer')
-      .setCharacteristic(this.platform.Characteristic.Model, 'Default-Model')
-      .setCharacteristic(this.platform.Characteristic.SerialNumber, 'Default-Serial');
+    this.currentKnownState = this.platform.Characteristic.LockCurrentState.UNKNOWN;
 
     // create a new Lock Mechanism service
-    this.service = new this.platform.Service('Default-LockMechanism', '');
+    this.service = new this.platform.Service('SubaruCar-LockMechanism', '');
 
     // create handlers for required characteristics
     this.service.getCharacteristic(this.platform.Characteristic.LockCurrentState)
@@ -41,7 +37,7 @@ export class SubaruPlatformLockAccessory {
     this.log.debug('Triggered GET LockCurrentState');
 
     // set this to a valid value for LockCurrentState
-    const currentValue = this.platform.Characteristic.LockCurrentState.UNSECURED;
+    const currentValue = this.platform.Characteristic.LockCurrentState.UNKNOWN;
 
     return currentValue;
   }
@@ -51,12 +47,7 @@ export class SubaruPlatformLockAccessory {
  * Handle requests to get the current value of the "Lock Target State" characteristic
  */
   handleLockTargetStateGet() {
-    this.log.debug('Triggered GET LockTargetState');
-
-    // set this to a valid value for LockTargetState
-    const currentValue = this.platform.Characteristic.LockTargetState.UNSECURED;
-
-    return currentValue;
+    return this.currentKnownState;
   }
 
   /**
@@ -64,5 +55,21 @@ export class SubaruPlatformLockAccessory {
  */
   handleLockTargetStateSet(value: CharacteristicValue) {
     this.log.debug('Triggered SET LockTargetState:', value);
+    switch (value) {
+    case this.platform.Characteristic.LockTargetState.SECURED: {
+      this.platform.subaruAPI.lock();
+      this.currentKnownState = value;
+      break;
+    }
+    case this.platform.Characteristic.LockTargetState.UNSECURED: {
+      this.platform.subaruAPI.unlock();
+      this.currentKnownState = value;
+      break;
+    }
+    default: {
+      this.log.error('Unknown value');
+      break;
+    }
+    }
   }
 }
