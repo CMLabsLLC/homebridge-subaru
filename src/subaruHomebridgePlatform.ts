@@ -48,13 +48,14 @@ export class SubaruHomebridgePlatform implements DynamicPlatformPlugin {
       this.log.error('Missing required config value: pin');
     }
 
-    this.subaruAPI = new SubaruAPI(this.config);
+    this.subaruAPI = new SubaruAPI(this.config, this.log);
 
     this.log.debug('Finished initializing platform:', this.config.name);
 
     this.api.on('didFinishLaunching', () => {
       log.debug('Executed didFinishLaunching callback');
       this.discoverDevices();
+      this.subaruAPI.login();
     });
   }
 

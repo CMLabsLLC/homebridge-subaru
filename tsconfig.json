@@ -3,7 +3,10 @@
     "target": "ES2022",
     "lib": [
       "DOM",
-      "ES2022"
+      "ES2022",
+      "es5",
+      "es6",
+      "dom.iterable"
     ],
     "rootDir": "src",
     "module": "ES2022",
