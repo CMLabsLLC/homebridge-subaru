@@ -1,6 +1,7 @@
 import axios, { AxiosHeaderValue, AxiosInstance } from 'axios';
 import { SubaruHomebridgePlatformConfig } from './subaruHomebridgePlatform';
 import { Logging } from 'homebridge';
+import qs from 'qs';
 
 export class SubaruAPI {
   private readonly config: SubaruHomebridgePlatformConfig;
@@ -22,23 +23,42 @@ export class SubaruAPI {
   }
 
   public async login() {
-    const response = await this.client.post(
-      '/login',
-      {
-        username: this.config.username,
-        password: this.config.password,
-        lastSelectedVehicleKey: this.config.lastSelectedVehicleKey,
-        deviceId: this.config.deviceId,
+    const data = qs.stringify({
+      'username': this.config.username,
+      'password': this.config.password,
+      'lastSelectedVehicleKey': this.config.lastSelectedVehicleKey,
+      'deviceId': this.config.deviceId, 
+    });
+
+    const config = {
+      method: 'post',
+      maxBodyLength: Infinity,
+      url: 'https://www.mysubaru.com/login',
+      headers: { 
+        'Content-Type': 'application/x-www-form-urlencoded', 
       },
+      data : data,
+    };
+
+    const response = await axios.request(config);
+
+    // const response = await this.client.post(
+    //   '/login',
     //   {
-    //     withCredentials: true,
-    //     headers: {
-    //       'Content-Type': 'application/x-www-form-urlencoded',
-    //     },
+    //     username: this.config.username,
+    //     password: this.config.password,
+    //     lastSelectedVehicleKey: this.config.lastSelectedVehicleKey,
+    //     deviceId: this.config.deviceId,
     //   },
-    );
+    // //   {
+    // //     withCredentials: true,
+    // //     headers: {
+    // //       'Content-Type': 'application/x-www-form-urlencoded',
+    // //     },
+    // //   },
+    // );
     
-    this.log('response', response.data);
+    // this.log('response', response.data);
     const cookie: string[] = response.headers['set-cookie'] || []; 
     this.cookie = cookie;
     this.log('cookie: %s', cookie);
@@ -49,34 +69,29 @@ export class SubaruAPI {
   public async vehicleStatus() {
     await this.login();
 
-    const response = await this.client
-      .post(
-        '/service/g2/vehicleStatus/execute.json',
-        { pin: this.config.pin },
-        { withCredentials: true,
-          headers: {
-            Cookie: this.cookie,
-          },
-        },
-      );
-    // const response = await this.client
-    //   .post(
-    //     , 
-    //     {
-    //       data: {
-            
-    //       },
-    //       withCredentials: true,
-    //       headers: {
-    //         Cookie: this.cookie,
-    //       },
-    //     });
+    const data = qs.stringify({
+      'pin': this.config.pin, 
+    });
+      
+    const config = {
+      method: 'post',
+      maxBodyLength: Infinity,
+      url: 'https://www.mysubaru.com/service/g2/vehicleStatus/execute.json',
+      headers: { 
+        'Content-Type': 'application/x-www-form-urlencoded', 
+        // eslint-disable-next-line max-len
+        'Cookie': 'JSESSIONID=2B87C009882C90AE83A748C7304BFED9; X-Oracle-BMC-LBS-Route=9b56b3d167d9dadbe8e8f7e6511957f32f5fa55a27da03a11a2ff120e313e9b656c62fd8a7c42ae820ddea14d24acf4566223adc497ec6096097d9c7',
+      },
+      data : data,
+    };
+  
+    const response = await axios.request(config);
 
     this.log('response:', response.data);
-    this.log('doorFrontLeftPosition: %s', response.data.doorFrontLeftPosition);
-    this.log('doorFrontRightPosition: %s', response.data.doorFrontRightPosition);
-    this.log('doorRearLeftPosition: %s', response.data.doorRearLeftPosition);
-    this.log('doorRearRightPosition: %s', response.data.doorRearRightPosition);
+    this.log('doorFrontLeftPosition: %s', response.data.data.result.doorFrontLeftPosition);
+    this.log('doorFrontRightPosition: %s', response.data.data.result.doorFrontRightPosition);
+    this.log('doorRearLeftPosition: %s', response.data.data.result.doorRearLeftPosition);
+    this.log('doorRearRightPosition: %s', response.data.data.result.doorRearRightPosition);
 
     return response;
   }
@@ -89,9 +104,9 @@ export class SubaruAPI {
       },
     };
 
-    if ((await this.login()).status !== 200) {
-      throw new Error('Response not successful');
-    }
+    // if ((await this.login()).status !== 200) {
+    //   throw new Error('Response not successful');
+    // }
     return await axios.post('https://www.mysubaru.com/service/g2/lock/execute.json', requestConfig.data, { withCredentials: true });
   }
 
@@ -104,9 +119,9 @@ export class SubaruAPI {
       },
     };
 
-    if ((await this.login()).status !== 200) {
-      throw new Error('Response not successful');
-    }
+    // if ((await this.login()).status !== 200) {
+    //   throw new Error('Response not successful');
+    // }
     return await axios.post('https://www.mysubaru.com/service/g2/unlock/execute.json', requestConfig.data, { withCredentials: true });
   }
 

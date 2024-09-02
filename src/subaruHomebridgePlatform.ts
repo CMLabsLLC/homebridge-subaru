@@ -55,7 +55,7 @@ export class SubaruHomebridgePlatform implements DynamicPlatformPlugin {
     this.api.on('didFinishLaunching', () => {
       log.debug('Executed didFinishLaunching callback');
       this.discoverDevices();
-      this.subaruAPI.login();
+      this.subaruAPI.vehicleStatus();
     });
   }
 
