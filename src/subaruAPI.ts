@@ -1,13 +1,13 @@
-import axios, { AxiosHeaderValue, AxiosInstance } from 'axios';
+import axios from 'axios';
 import { SubaruHomebridgePlatformConfig } from './subaruHomebridgePlatform';
 import { Logging } from 'homebridge';
 import qs from 'qs';
+import fs from 'fs';
 
 export class SubaruAPI {
   private readonly config: SubaruHomebridgePlatformConfig;
   public readonly log: Logging;
-  private readonly client: AxiosInstance;
-  private cookie: AxiosHeaderValue;
+  private authCookies: string[];
 
   constructor(
     config: SubaruHomebridgePlatformConfig,
@@ -15,84 +15,87 @@ export class SubaruAPI {
   ) {
     this.config = config;
     this.log = log;
-    this.cookie = null;
+    this.authCookies = [];
 
-    this.client = axios.create({
-      baseURL: 'https://www.mysubaru.com',
+    // Add a request interceptor
+    axios.interceptors.request.use((config) => {
+      this.log('injecting cookies', this.requestCookies());
+      config.headers.Cookie = this.requestCookies();
+      return config;
+    }, (error) => {
+      return Promise.reject(error);
     });
   }
 
   public async login() {
-    const data = qs.stringify({
-      'username': this.config.username,
-      'password': this.config.password,
-      'lastSelectedVehicleKey': this.config.lastSelectedVehicleKey,
-      'deviceId': this.config.deviceId, 
+    const data: string = qs.stringify({
+      'username': this.config.username || '',
+      'password': this.config.password || '',
+      'lastSelectedVehicleKey': this.config.lastSelectedVehicleKey || '',
+      'deviceId': this.config.deviceId || '', 
     });
 
     const config = {
       method: 'post',
-      maxBodyLength: Infinity,
       url: 'https://www.mysubaru.com/login',
-      headers: { 
-        'Content-Type': 'application/x-www-form-urlencoded', 
+      data: data,
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
       },
-      data : data,
     };
 
     const response = await axios.request(config);
-
-    // const response = await this.client.post(
-    //   '/login',
-    //   {
-    //     username: this.config.username,
-    //     password: this.config.password,
-    //     lastSelectedVehicleKey: this.config.lastSelectedVehicleKey,
-    //     deviceId: this.config.deviceId,
-    //   },
-    // //   {
-    // //     withCredentials: true,
-    // //     headers: {
-    // //       'Content-Type': 'application/x-www-form-urlencoded',
-    // //     },
-    // //   },
-    // );
     
     // this.log('response', response.data);
-    const cookie: string[] = response.headers['set-cookie'] || []; 
-    this.cookie = cookie;
-    this.log('cookie: %s', cookie);
+    this.authCookies = (response.headers['set-cookie'] || []);
+    this.log('authCookies: %s', this.authCookies);
 
+    // this.log(response.data);
+    fs.writeFileSync('/tmp/test-login.html', JSON.stringify(response.data));
+    // throw new Error('bye');
     return response;
+  }
+
+  private requestCookies() {
+    const requestCookies: string[] = [];
+    this.authCookies.forEach((cookie) => {
+      const token = cookie.split(' ').at(0);
+      if (token) {
+        const trimmedToken = token.substring(0, token.length - 1);
+        requestCookies.push(trimmedToken);
+      }
+    });
+    return requestCookies.join('; ');
+  }
+
+  private delay(ms: number) {
+    return new Promise( resolve => setTimeout(resolve, ms) );
   }
 
   public async vehicleStatus() {
     await this.login();
 
     const data = qs.stringify({
-      'pin': this.config.pin, 
+      'pin': this.config.pin || '', 
     });
-      
+
     const config = {
       method: 'post',
       maxBodyLength: Infinity,
       url: 'https://www.mysubaru.com/service/g2/vehicleStatus/execute.json',
       headers: { 
-        'Content-Type': 'application/x-www-form-urlencoded', 
-        // eslint-disable-next-line max-len
-        'Cookie': 'JSESSIONID=2B87C009882C90AE83A748C7304BFED9; X-Oracle-BMC-LBS-Route=9b56b3d167d9dadbe8e8f7e6511957f32f5fa55a27da03a11a2ff120e313e9b656c62fd8a7c42ae820ddea14d24acf4566223adc497ec6096097d9c7',
+        'Content-Type': 'application/x-www-form-urlencoded',
       },
       data : data,
     };
-  
+
     const response = await axios.request(config);
 
-    this.log('response:', response.data);
     this.log('doorFrontLeftPosition: %s', response.data.data.result.doorFrontLeftPosition);
     this.log('doorFrontRightPosition: %s', response.data.data.result.doorFrontRightPosition);
     this.log('doorRearLeftPosition: %s', response.data.data.result.doorRearLeftPosition);
     this.log('doorRearRightPosition: %s', response.data.data.result.doorRearRightPosition);
-
+ 
     return response;
   }
 
