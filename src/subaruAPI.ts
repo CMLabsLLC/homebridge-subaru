@@ -2,7 +2,7 @@ import axios from 'axios';
 import { SubaruHomebridgePlatformConfig } from './subaruHomebridgePlatform';
 import { Logging } from 'homebridge';
 import qs from 'qs';
-import fs from 'fs';
+import child_process from 'child_process';
 
 export class SubaruAPI {
   private readonly config: SubaruHomebridgePlatformConfig;
@@ -35,25 +35,41 @@ export class SubaruAPI {
       'deviceId': this.config.deviceId || '', 
     });
 
-    const config = {
-      method: 'post',
-      url: 'https://www.mysubaru.com/login',
-      data: data,
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-    };
+    const cmd = `/usr/bin/curl \
+--silent \
+--dump-header \
+- \
+-o /dev/null \
+--header 'Content-Type: application/x-www-form-urlencoded' \
+--data '${data}' \
+https://www.mysubaru.com/login`;
+    this.log(cmd);
+    const headers = await this.run_cmd(cmd);
 
-    const response = await axios.request(config);
+    this.log('headers: ', headers);
+    // throw new Error('bye');
     
     // this.log('response', response.data);
-    this.authCookies = (response.headers['set-cookie'] || []);
+    this.authCookies = (this.processResponse(headers));
     this.log('authCookies: %s', this.authCookies);
+  }
 
-    // this.log(response.data);
-    fs.writeFileSync('/tmp/test-login.html', JSON.stringify(response.data));
-    // throw new Error('bye');
-    return response;
+  private processResponse(header: string): string[] {
+    const cookies: string[] = [];
+    header.split('\n').forEach ((line) => {
+      if(line.startsWith('Set-Cookie')) {
+        const cookie = line.replace('Set-Cookie: ', '').split(' ').at(0) || '';
+        cookies.push(cookie);
+      }
+    });
+    return cookies;
+  }
+  private async run_cmd(cmd: string): Promise<string> {
+    return child_process.execSync(cmd, { encoding: 'utf8' });;
+    // throw new Error('bye from run command');
+    // return new Promise( () => {
+    //   return result; 
+    // } );
   }
 
   private requestCookies() {
@@ -100,6 +116,8 @@ export class SubaruAPI {
   }
 
   public async lock() {
+    await this.login();
+
     const requestConfig = {
       data: {
         pin: `${this.config.pin}`,
