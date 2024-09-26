@@ -19,7 +19,6 @@ export class SubaruAPI {
 
     // Add a request interceptor
     axios.interceptors.request.use((config) => {
-      this.log('injecting cookies', this.requestCookies());
       config.headers.Cookie = this.requestCookies();
       return config;
     }, (error) => {
@@ -35,20 +34,18 @@ export class SubaruAPI {
       'deviceId': this.config.deviceId || '', 
     });
 
-    const cmd = `/usr/bin/curl \
+    const headers = await this.run_cmd(
+      `/usr/bin/curl \
 --silent \
 --dump-header \
 - \
 -o /dev/null \
 --header 'Content-Type: application/x-www-form-urlencoded' \
 --data '${data}' \
-https://www.mysubaru.com/login`;
-    const headers = await this.run_cmd(cmd);
+https://www.mysubaru.com/login`,
+    );
 
-    this.log('headers: ', headers);
-
-    this.authCookies = (this.processResponse(headers));
-    this.log('authCookies: %s', this.authCookies);
+    this.authCookies = this.processResponse(headers);
   }
 
   private processResponse(header: string): string[] {
