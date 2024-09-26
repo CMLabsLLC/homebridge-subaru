@@ -127,14 +127,25 @@ https://www.mysubaru.com/login`,
   }
 
   public async unlock() {
-    const requestConfig = {
-      data: {
-        pin: `${this.config.pin}`,
-        unlockDoorType: 'ALL_DOORS_CMD',
-        now: `${this.seconds_since_epoch()}`,
+    await this.login();
+
+    const data = qs.stringify({
+      'pin': this.config.pin || '',
+      'now': this.seconds_since_epoch(),
+      'unlockDoorType': 'ALL_DOORS_CMD',
+    });
+
+    const config = {
+      method: 'post',
+      maxBodyLength: Infinity,
+      url: 'https://www.mysubaru.com/service/g2/unlock/execute.json',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
       },
+      data : data,
     };
-    return await axios.post('https://www.mysubaru.com/service/g2/unlock/execute.json', requestConfig.data, { withCredentials: true });
+
+    return await axios.request(config);
   }
 
   seconds_since_epoch() {
