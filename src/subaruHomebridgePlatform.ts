@@ -73,22 +73,22 @@ export class SubaruHomebridgePlatform implements DynamicPlatformPlugin {
   async discoverDevices() {
     const uuid = this.serviceUUID();
 
-    const existingAccessory = this.accessories.find(accessory => accessory.UUID === uuid);
+    // const existingAccessory = this.accessories.find(accessory => accessory.UUID === uuid);
 
-    if (existingAccessory) {
-      this.log.info('Restoring existing accessory from cache:', existingAccessory.displayName);
+    // if (existingAccessory) {
+    //   this.log.info('Restoring existing accessory from cache:', existingAccessory.displayName);
 
-      this.api.updatePlatformAccessories([existingAccessory]);
+    //   this.api.updatePlatformAccessories([existingAccessory]);
 
-      new SubaruPlatformLockAccessory(this, existingAccessory, this.log);
-    } else {
-      this.log.info('Adding new accessory:', 'Car Lock');
+    //   new SubaruPlatformLockAccessory(this, existingAccessory, this.log);
+    // } else {
+    this.log.info('Adding new accessory:', 'Car Lock');
 
-      const accessory = new this.api.platformAccessory('Car Lock', uuid, Categories.DOOR_LOCK);
+    const accessory = new this.api.platformAccessory('Car Lock', uuid, Categories.DOOR_LOCK);
 
-      new SubaruPlatformLockAccessory(this, accessory, this.log);
+    new SubaruPlatformLockAccessory(this, accessory, this.log);
 
-      this.api.registerPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [accessory]);
-    }
+    this.api.registerPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [accessory]);
+    // }
   }
 }
