@@ -85,6 +85,11 @@ export class SubaruHomebridgePlatform implements DynamicPlatformPlugin {
 
     const deviceName = 'Subaru Door Lock';
 
+    const device = {
+      name: deviceName,
+      uuid: uuid,
+    };
+
     if (existingAccessory) {
       this.log.info('Restoring existing accessory from cache:', existingAccessory.displayName);
 
@@ -95,6 +100,8 @@ export class SubaruHomebridgePlatform implements DynamicPlatformPlugin {
       this.log.info('Adding new accessory:', deviceName);
 
       const accessory = new this.api.platformAccessory(deviceName, uuid);
+
+      accessory.context.device = device;
 
       new SubaruPlatformLockAccessory(this, accessory, this.subaruAPI);
 
