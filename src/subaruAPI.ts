@@ -47,9 +47,7 @@ https://www.mysubaru.com/login`;
     const headers = await this.run_cmd(cmd);
 
     this.log('headers: ', headers);
-    // throw new Error('bye');
-    
-    // this.log('response', response.data);
+
     this.authCookies = (this.processResponse(headers));
     this.log('authCookies: %s', this.authCookies);
   }
@@ -65,11 +63,7 @@ https://www.mysubaru.com/login`;
     return cookies;
   }
   private async run_cmd(cmd: string): Promise<string> {
-    return child_process.execSync(cmd, { encoding: 'utf8' });;
-    // throw new Error('bye from run command');
-    // return new Promise( () => {
-    //   return result; 
-    // } );
+    return child_process.execSync(cmd, { encoding: 'utf8' });
   }
 
   private requestCookies() {
@@ -117,17 +111,12 @@ https://www.mysubaru.com/login`;
 
   public async lock() {
     await this.login();
-
     const requestConfig = {
       data: {
         pin: `${this.config.pin}`,
         now: `${this.seconds_since_epoch()}`,
       },
     };
-
-    // if ((await this.login()).status !== 200) {
-    //   throw new Error('Response not successful');
-    // }
     return await axios.post('https://www.mysubaru.com/service/g2/lock/execute.json', requestConfig.data, { withCredentials: true });
   }
 
@@ -139,10 +128,6 @@ https://www.mysubaru.com/login`;
         now: `${this.seconds_since_epoch()}`,
       },
     };
-
-    // if ((await this.login()).status !== 200) {
-    //   throw new Error('Response not successful');
-    // }
     return await axios.post('https://www.mysubaru.com/service/g2/unlock/execute.json', requestConfig.data, { withCredentials: true });
   }
 
