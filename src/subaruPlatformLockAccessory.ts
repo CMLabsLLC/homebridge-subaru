@@ -1,164 +1,139 @@
-import { Logging, AccessoryEventTypes, Categories, PlatformAccessory } from 'homebridge';
+import type { CharacteristicValue, PlatformAccessory, Service } from 'homebridge';
 
-import type { SubaruHomebridgePlatform } from './subaruHomebridgePlatform.js';
+import type { ExampleHomebridgePlatform } from './subaruHomebridgePlatform.js';
 
 /**
  * Platform Accessory
  * An instance of this class is created for each accessory your platform registers
  * Each accessory may expose multiple services of different service types.
  */
-export class SubaruPlatformLockAccessory {
-  // private service: Service;
-  // private currentKnownState: CharacteristicValue;
+export class ExamplePlatformAccessory {
+  private service: Service;
+
+  /**
+   * These are just used to create a working example
+   * You should implement your own code to track the state of your accessory
+   */
+  private exampleStates = {
+    On: false,
+    Brightness: 100,
+  };
 
   constructor(
-    private readonly platform: SubaruHomebridgePlatform,
+    private readonly platform: ExampleHomebridgePlatform,
     private readonly accessory: PlatformAccessory,
-    public readonly log: Logging,
   ) {
-    // here's a fake hardware device that we'll expose to HomeKit
-    const FAKE_LOCK = {
-      locked: false,
-      lock: () => {
-        console.log('Locking the lock!');
-        FAKE_LOCK.locked = true;
-      },
-      unlock: () => {
-        console.log('Unlocking the lock!');
-        FAKE_LOCK.locked = false;
-      },
-      identify: () => {
-        console.log('Identify the lock!');
-      },
-    };
+    // set accessory information
+    this.accessory.getService(this.platform.Service.AccessoryInformation)!
+      .setCharacteristic(this.platform.Characteristic.Manufacturer, 'Default-Manufacturer')
+      .setCharacteristic(this.platform.Characteristic.Model, 'Default-Model')
+      .setCharacteristic(this.platform.Characteristic.SerialNumber, 'Default-Serial');
 
-    // Generate a consistent UUID for our Lock Accessory that will remain the same even when
-    // restarting our server. We use the `uuid.generate` helper function to create a deterministic
-    // UUID based on an arbitrary "namespace" and the word "lock".
-    const lockUUID = this.platform.api.hap.uuid.generate('hap-nodejs:accessories:lock');
+    // get the LightBulb service if it exists, otherwise create a new LightBulb service
+    // you can create multiple services for each accessory
+    this.service = this.accessory.getService(this.platform.Service.Lightbulb) || this.accessory.addService(this.platform.Service.Lightbulb);
 
-    // This is the Accessory that we'll return to HAP-NodeJS that represents our fake lock.
-    const lock = new this.platform.api.platformAccessory('Lock', lockUUID);
+    // set the service name, this is what is displayed as the default name on the Home app
+    // in this example we are using the name we stored in the `accessory.context` in the `discoverDevices` method.
+    this.service.setCharacteristic(this.platform.Characteristic.Name, accessory.context.device.exampleDisplayName);
 
-    // Add properties for publishing (in case we're using Core.js and not BridgedCore.js)
-    // @ts-expect-error: Core/BridgeCore API
-    lock.username = 'C1:5D:3A:EE:5E:FA';
-    // @ts-expect-error: Core/BridgeCore API
-    lock.pincode = '031-45-154';
-    lock.category = Categories.DOOR_LOCK;
+    // each service must implement at-minimum the "required characteristics" for the given service type
+    // see https://developers.homebridge.io/#/service/Lightbulb
 
-    // set some basic properties (these values are arbitrary and setting them is optional)
-    // lock
-    //   .getService(Service.AccessoryInformation)!
-    //   .setCharacteristic(Characteristic.Manufacturer, 'Lock Manufacturer')
-    //   .setCharacteristic(Characteristic.Model, 'Rev-2')
-    //   .setCharacteristic(Characteristic.SerialNumber, 'MY-Serial-Number');
+    // register handlers for the On/Off Characteristic
+    this.service.getCharacteristic(this.platform.Characteristic.On)
+      .onSet(this.setOn.bind(this)) // SET - bind to the `setOn` method below
+      .onGet(this.getOn.bind(this)); // GET - bind to the `getOn` method below
 
-    // listen for the "identify" event for this Accessory
-     
-    lock.on(AccessoryEventTypes.IDENTIFY, () => {
-      FAKE_LOCK.identify();
-    });
+    // register handlers for the Brightness Characteristic
+    this.service.getCharacteristic(this.platform.Characteristic.Brightness)
+      .onSet(this.setBrightness.bind(this)); // SET - bind to the 'setBrightness` method below
 
-    const lockService = new this.platform.Service.LockMechanism('Fake Lock');
+    /**
+     * Creating multiple services of the same type.
+     *
+     * To avoid "Cannot add a Service with the same UUID another Service without also defining a unique 'subtype' property." error,
+     * when creating multiple services of the same type, you need to use the following syntax to specify a name and subtype id:
+     * this.accessory.getService('NAME') || this.accessory.addService(this.platform.Service.Lightbulb, 'NAME', 'USER_DEFINED_SUBTYPE_ID');
+     *
+     * The USER_DEFINED_SUBTYPE must be unique to the platform accessory (if you platform exposes multiple accessories, each accessory
+     * can use the same subtype id.)
+     */
 
-    const Characteristic = this.platform.api.hap.Characteristic;;
-  
-    // Add the actual Door Lock Service and listen for change events from iOS.
-    lockService.getCharacteristic(Characteristic.LockTargetState)
-      .on(this.platform.api.hap.CharacteristicEventTypes.SET, (value, callback) => {
+    // Example: add two "motion sensor" services to the accessory
+    const motionSensorOneService = this.accessory.getService('Motion Sensor One Name')
+      || this.accessory.addService(this.platform.Service.MotionSensor, 'Motion Sensor One Name', 'YourUniqueIdentifier-1');
 
-        if (value === Characteristic.LockTargetState.UNSECURED) {
-          FAKE_LOCK.unlock();
-          callback(); // Our fake Lock is synchronous - this value has been successfully set
+    const motionSensorTwoService = this.accessory.getService('Motion Sensor Two Name')
+      || this.accessory.addService(this.platform.Service.MotionSensor, 'Motion Sensor Two Name', 'YourUniqueIdentifier-2');
 
-          // now we want to set our lock's "actual state" to be unsecured so it shows as unlocked in iOS apps
-          lockService.updateCharacteristic(Characteristic.LockCurrentState, Characteristic.LockCurrentState.UNSECURED);
-        } else if (value === Characteristic.LockTargetState.SECURED) {
-          FAKE_LOCK.lock();
-          callback(); // Our fake Lock is synchronous - this value has been successfully set
+    /**
+     * Updating characteristics values asynchronously.
+     *
+     * Example showing how to update the state of a Characteristic asynchronously instead
+     * of using the `on('get')` handlers.
+     * Here we change update the motion sensor trigger states on and off every 10 seconds
+     * the `updateCharacteristic` method.
+     *
+     */
+    let motionDetected = false;
+    setInterval(() => {
+      // EXAMPLE - inverse the trigger
+      motionDetected = !motionDetected;
 
-          // now we want to set our lock's "actual state" to be locked so it shows as open in iOS apps
-          lockService.updateCharacteristic(Characteristic.LockCurrentState, Characteristic.LockCurrentState.SECURED);
-        }
-      });
+      // push the new value to HomeKit
+      motionSensorOneService.updateCharacteristic(this.platform.Characteristic.MotionDetected, motionDetected);
+      motionSensorTwoService.updateCharacteristic(this.platform.Characteristic.MotionDetected, !motionDetected);
 
-    // We want to intercept requests for our current state so we can query the hardware itself instead of
-    // allowing HAP-NodeJS to return the cached Characteristic.value.
-    lockService.getCharacteristic(Characteristic.LockCurrentState)
-      .on(this.platform.api.hap.CharacteristicEventTypes.GET, callback => {
-
-        // this event is emitted when you ask Siri directly whether your lock is locked or not. you might query
-        // the lock hardware itself to find this out, then call the callback. But if you take longer than a
-        // few seconds to respond, Siri will give up.
-
-        if (FAKE_LOCK.locked) {
-          console.log('Are we locked? Yes.');
-          callback(undefined, Characteristic.LockCurrentState.SECURED);
-        } else {
-          console.log('Are we locked? No.');
-          callback(undefined, Characteristic.LockCurrentState.UNSECURED);
-        }
-      });
-
-    lock.addService(lockService);
-
-    // this.currentKnownState = this.handleLockCurrentStateGet();
-
-    // // create a new Lock Mechanism service
-    // this.service = new this.platform.Service.LockMechanism('SubaruCarLockMechanism', this.platform.serviceUUID());
-
-    // // create handlers for required characteristics
-    // this.service.getCharacteristic(this.platform.Characteristic.LockCurrentState)
-    //   .onGet(this.handleLockCurrentStateGet.bind(this));
-
-    // this.service.getCharacteristic(this.platform.Characteristic.LockTargetState)
-    //   .onGet(this.handleLockTargetStateGet.bind(this))
-    //   .onSet(this.handleLockTargetStateSet.bind(this));
+      this.platform.log.debug('Triggering motionSensorOneService:', motionDetected);
+      this.platform.log.debug('Triggering motionSensorTwoService:', !motionDetected);
+    }, 10000);
   }
 
-  //   /**
-  //   * Handle requests to get the current value of the "Lock Current State" characteristic
-  //   */
-  //   handleLockCurrentStateGet() {
-  //     this.log.debug('Triggered GET LockCurrentState');
+  /**
+   * Handle "SET" requests from HomeKit
+   * These are sent when the user changes the state of an accessory, for example, turning on a Light bulb.
+   */
+  async setOn(value: CharacteristicValue) {
+    // implement your own code to turn your device on/off
+    this.exampleStates.On = value as boolean;
 
-  //     // defaulting to unsecured until there is a way to pull from subaru api
-  //     const currentValue = this.platform.Characteristic.LockCurrentState.UNSECURED;
+    this.platform.log.debug('Set Characteristic On ->', value);
+  }
 
-  //     return currentValue;
-  //   }
+  /**
+   * Handle the "GET" requests from HomeKit
+   * These are sent when HomeKit wants to know the current state of the accessory, for example, checking if a Light bulb is on.
+   *
+   * GET requests should return as fast as possible. A long delay here will result in
+   * HomeKit being unresponsive and a bad user experience in general.
+   *
+   * If your device takes time to respond you should update the status of your device
+   * asynchronously instead using the `updateCharacteristic` method instead.
 
+   * @example
+   * this.service.updateCharacteristic(this.platform.Characteristic.On, true)
+   */
+  async getOn(): Promise<CharacteristicValue> {
+    // implement your own code to check if the device is on
+    const isOn = this.exampleStates.On;
 
-  //   /**
-  //  * Handle requests to get the current value of the "Lock Target State" characteristic
-  //  */
-  //   handleLockTargetStateGet() {
-  //     return this.currentKnownState;
-  //   }
+    this.platform.log.debug('Get Characteristic On ->', isOn);
 
-//   /**
-//  * Handle requests to set the "Lock Target State" characteristic
-//  */
-//   handleLockTargetStateSet(value: CharacteristicValue) {
-//     this.log.debug('Triggered SET LockTargetState:', value);
-//     switch (value) {
-//     case this.platform.Characteristic.LockTargetState.SECURED: {
-//       this.platform.subaruAPI.lock();
-//       this.service.getCharacteristic(this.platform.Characteristic.LockCurrentState).updateValue(value);
-//       this.currentKnownState = value;
-//       break;
-//     }
-//     case this.platform.Characteristic.LockTargetState.UNSECURED: {
-//       this.platform.subaruAPI.unlock();
-//       this.service.getCharacteristic(this.platform.Characteristic.LockCurrentState).updateValue(value);
-//       this.currentKnownState = value;
-//       break;
-//     }
-//     default: {
-//       this.log.error('Unknown value');
-//       break;
-//     }
-//     }
-//   }
+    // if you need to return an error to show the device as "Not Responding" in the Home app:
+    // throw new this.platform.api.hap.HapStatusError(this.platform.api.hap.HAPStatus.SERVICE_COMMUNICATION_FAILURE);
+
+    return isOn;
+  }
+
+  /**
+   * Handle "SET" requests from HomeKit
+   * These are sent when the user changes the state of an accessory, for example, changing the Brightness
+   */
+  async setBrightness(value: CharacteristicValue) {
+    // implement your own code to set the brightness
+    this.exampleStates.Brightness = value as number;
+
+    this.platform.log.debug('Set Characteristic Brightness -> ', value);
+  }
 }

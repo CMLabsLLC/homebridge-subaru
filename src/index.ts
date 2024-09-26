@@ -1,11 +1,11 @@
 import type { API } from 'homebridge';
 
-import { SubaruHomebridgePlatform } from './subaruHomebridgePlatform.js';
+import { ExampleHomebridgePlatform } from './subaruHomebridgePlatform.js';
 import { PLATFORM_NAME } from './settings.js';
 
 /**
  * This method registers the platform with Homebridge
  */
 export default (api: API) => {
-  api.registerPlatform(PLATFORM_NAME, SubaruHomebridgePlatform);
+  api.registerPlatform(PLATFORM_NAME, ExampleHomebridgePlatform);
 };
