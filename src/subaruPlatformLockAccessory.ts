@@ -1,6 +1,6 @@
 import type { CharacteristicValue, PlatformAccessory, Service } from 'homebridge';
 
-import type { ExampleHomebridgePlatform } from './subaruHomebridgePlatform.js';
+import type { SubaruHomebridgePlatform } from './subaruHomebridgePlatform.js';
 
 /**
  * Platform Accessory
@@ -11,7 +11,7 @@ export class SubaruPlatformLockAccessory {
   private service: Service;
 
   constructor(
-    private readonly platform: ExampleHomebridgePlatform,
+    private readonly platform: SubaruHomebridgePlatform,
     private readonly accessory: PlatformAccessory,
   ) {
     // set accessory information
