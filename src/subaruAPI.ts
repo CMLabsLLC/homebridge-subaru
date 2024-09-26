@@ -2,7 +2,7 @@ import axios from 'axios';
 import { SubaruHomebridgePlatformConfig } from './subaruHomebridgePlatform';
 import { Logging } from 'homebridge';
 import qs from 'qs';
-import fs from 'fs';
+import child_process from 'child_process';
 
 export class SubaruAPI {
   private readonly config: SubaruHomebridgePlatformConfig;
@@ -35,25 +35,34 @@ export class SubaruAPI {
       'deviceId': this.config.deviceId || '', 
     });
 
-    const config = {
-      method: 'post',
-      url: 'https://www.mysubaru.com/login',
-      data: data,
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-    };
+    const cmd = `/usr/bin/curl \
+--silent \
+--dump-header \
+- \
+-o /dev/null \
+--header 'Content-Type: application/x-www-form-urlencoded' \
+--data '${data}' \
+https://www.mysubaru.com/login`;
+    const headers = await this.run_cmd(cmd);
 
-    const response = await axios.request(config);
-    
-    // this.log('response', response.data);
-    this.authCookies = (response.headers['set-cookie'] || []);
+    this.log('headers: ', headers);
+
+    this.authCookies = (this.processResponse(headers));
     this.log('authCookies: %s', this.authCookies);
+  }
 
-    // this.log(response.data);
-    fs.writeFileSync('/tmp/test-login.html', JSON.stringify(response.data));
-    // throw new Error('bye');
-    return response;
+  private processResponse(header: string): string[] {
+    const cookies: string[] = [];
+    header.split('\n').forEach ((line) => {
+      if(line.startsWith('Set-Cookie')) {
+        const cookie = line.replace('Set-Cookie: ', '').split(' ').at(0) || '';
+        cookies.push(cookie);
+      }
+    });
+    return cookies;
+  }
+  private async run_cmd(cmd: string): Promise<string> {
+    return child_process.execSync(cmd, { encoding: 'utf8' });
   }
 
   private requestCookies() {
@@ -100,16 +109,13 @@ export class SubaruAPI {
   }
 
   public async lock() {
+    await this.login();
     const requestConfig = {
       data: {
         pin: `${this.config.pin}`,
         now: `${this.seconds_since_epoch()}`,
       },
     };
-
-    // if ((await this.login()).status !== 200) {
-    //   throw new Error('Response not successful');
-    // }
     return await axios.post('https://www.mysubaru.com/service/g2/lock/execute.json', requestConfig.data, { withCredentials: true });
   }
 
@@ -121,10 +127,6 @@ export class SubaruAPI {
         now: `${this.seconds_since_epoch()}`,
       },
     };
-
-    // if ((await this.login()).status !== 200) {
-    //   throw new Error('Response not successful');
-    // }
     return await axios.post('https://www.mysubaru.com/service/g2/unlock/execute.json', requestConfig.data, { withCredentials: true });
   }
 
