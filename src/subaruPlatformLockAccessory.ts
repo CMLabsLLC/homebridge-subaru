@@ -38,7 +38,7 @@ export class SubaruPlatformLockAccessory {
     const lockUUID = this.platform.api.hap.uuid.generate('hap-nodejs:accessories:lock');
 
     // This is the Accessory that we'll return to HAP-NodeJS that represents our fake lock.
-    const lock = exports.accessory = new this.platform.api.platformAccessory('Lock', lockUUID);
+    const lock = new this.platform.api.platformAccessory('Lock', lockUUID);
 
     // Add properties for publishing (in case we're using Core.js and not BridgedCore.js)
     // @ts-expect-error: Core/BridgeCore API
