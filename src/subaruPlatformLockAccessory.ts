@@ -16,7 +16,7 @@ export class SubaruPlatformLockAccessory {
     private readonly accessory: PlatformAccessory,
     public readonly log: Logging,
   ) {
-    this.currentKnownState = this.platform.Characteristic.LockCurrentState.UNKNOWN;
+    this.currentKnownState = this.handleLockCurrentStateGet();
 
     // create a new Lock Mechanism service
     this.service = new this.platform.Service('SubaruCarLockMechanism', this.platform.serviceUUID());
