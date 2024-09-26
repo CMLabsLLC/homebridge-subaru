@@ -43,7 +43,6 @@ export class SubaruAPI {
 --header 'Content-Type: application/x-www-form-urlencoded' \
 --data '${data}' \
 https://www.mysubaru.com/login`;
-    this.log(cmd);
     const headers = await this.run_cmd(cmd);
 
     this.log('headers: ', headers);
