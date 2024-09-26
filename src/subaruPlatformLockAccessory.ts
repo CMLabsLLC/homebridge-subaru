@@ -10,6 +10,8 @@ import { SubaruAPI } from './subaruAPI.js';
  */
 export class SubaruPlatformLockAccessory {
   private service: Service;
+  private lockCurrentState?: CharacteristicValue;
+  private lockTargetState?: CharacteristicValue;
 
   constructor(
     private readonly platform: SubaruHomebridgePlatform,
@@ -48,9 +50,9 @@ export class SubaruPlatformLockAccessory {
     this.platform.log.debug('Triggered GET LockCurrentState');
 
     // set this to a valid value for LockCurrentState
-    const currentValue = this.platform.Characteristic.LockCurrentState.UNSECURED;
+    const defaultValue = this.platform.Characteristic.LockCurrentState.UNSECURED;
 
-    return currentValue;
+    return this.lockCurrentState || defaultValue;
   }
 
 
@@ -60,10 +62,10 @@ export class SubaruPlatformLockAccessory {
   handleLockTargetStateGet() {
     this.platform.log.debug('Triggered GET LockTargetState');
 
-    // set this to a valid value for LockTargetState
-    const currentValue = this.platform.Characteristic.LockTargetState.UNSECURED;
+    // set this to a valid value for LockCurrentState
+    const defaultValue = this.platform.Characteristic.LockTargetState.UNSECURED;
 
-    return currentValue;
+    return this.lockTargetState || defaultValue;
   }
 
   /**
@@ -71,5 +73,22 @@ export class SubaruPlatformLockAccessory {
    */
   handleLockTargetStateSet(value: CharacteristicValue) {
     this.platform.log.debug('Triggered SET LockTargetState:', value);
+    this.lockTargetState = value;
+    switch (value) {
+    case this.platform.Characteristic.LockTargetState.SECURED: {
+      this.platform.subaruAPI.lock();
+      this.lockCurrentState = this.platform.Characteristic.LockCurrentState.SECURED;
+      break;
+    }
+    case this.platform.Characteristic.LockTargetState.UNSECURED: {
+      this.platform.subaruAPI.unlock();
+      this.lockCurrentState = this.platform.Characteristic.LockCurrentState.UNSECURED;
+      break;
+    }
+    default: {
+      this.platform.log.error('Unknown value');
+      break;
+    }
+    }
   }
 }
