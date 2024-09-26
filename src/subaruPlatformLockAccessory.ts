@@ -19,7 +19,7 @@ export class SubaruPlatformLockAccessory {
     this.currentKnownState = this.handleLockCurrentStateGet();
 
     // create a new Lock Mechanism service
-    this.service = new this.platform.Service('SubaruCarLockMechanism', this.platform.serviceUUID());
+    this.service = new this.platform.Service.LockMechanism('SubaruCarLockMechanism', this.platform.serviceUUID());
 
     // create handlers for required characteristics
     this.service.getCharacteristic(this.platform.Characteristic.LockCurrentState)
