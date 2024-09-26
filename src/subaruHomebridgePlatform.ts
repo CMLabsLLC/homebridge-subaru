@@ -1,4 +1,4 @@
-import { API, Characteristic, DynamicPlatformPlugin, Logging, PlatformAccessory, PlatformConfig, Service } from 'homebridge';
+import { API, Categories, Characteristic, DynamicPlatformPlugin, Logging, PlatformAccessory, PlatformConfig, Service } from 'homebridge';
 import { SubaruAPI } from './subaruAPI.js';
 import { Md5 } from 'ts-md5';
 import { SubaruPlatformLockAccessory } from './subaruPlatformLockAccessory.js';
@@ -84,7 +84,7 @@ export class SubaruHomebridgePlatform implements DynamicPlatformPlugin {
     } else {
       this.log.info('Adding new accessory:', 'Car Lock');
 
-      const accessory = new this.api.platformAccessory('Car Lock', uuid);
+      const accessory = new this.api.platformAccessory('Car Lock', uuid, Categories.DOOR_LOCK);
 
       new SubaruPlatformLockAccessory(this, accessory, this.log);
 

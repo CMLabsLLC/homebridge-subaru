@@ -31,8 +31,8 @@ export class SubaruPlatformLockAccessory {
   }
 
   /**
- * Handle requests to get the current value of the "Lock Current State" characteristic
- */
+  * Handle requests to get the current value of the "Lock Current State" characteristic
+  */
   handleLockCurrentStateGet() {
     this.log.debug('Triggered GET LockCurrentState');
 
