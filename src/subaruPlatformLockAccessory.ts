@@ -36,8 +36,8 @@ export class SubaruPlatformLockAccessory {
   handleLockCurrentStateGet() {
     this.log.debug('Triggered GET LockCurrentState');
 
-    // set this to a valid value for LockCurrentState
-    const currentValue = this.platform.Characteristic.LockCurrentState.UNKNOWN;
+    // defaulting to unsecured until there is a way to pull from subaru api
+    const currentValue = this.platform.Characteristic.LockCurrentState.UNSECURED;
 
     return currentValue;
   }
