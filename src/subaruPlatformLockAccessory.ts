@@ -29,9 +29,9 @@ export class ExamplePlatformAccessory {
       .setCharacteristic(this.platform.Characteristic.Model, 'Default-Model')
       .setCharacteristic(this.platform.Characteristic.SerialNumber, 'Default-Serial');
 
-    // get the LightBulb service if it exists, otherwise create a new LightBulb service
+    // get the LockMechanism service if it exists, otherwise create a new LockMechanism service
     // you can create multiple services for each accessory
-    this.service = this.accessory.getService(this.platform.Service.Lightbulb) || this.accessory.addService(this.platform.Service.Lightbulb);
+    this.service = this.accessory.getService(this.platform.Service.LockMechanism) || this.accessory.addService(this.platform.Service.LockMechanism);
 
     // set the service name, this is what is displayed as the default name on the Home app
     // in this example we are using the name we stored in the `accessory.context` in the `discoverDevices` method.
@@ -88,8 +88,48 @@ export class ExamplePlatformAccessory {
       this.platform.log.debug('Triggering motionSensorOneService:', motionDetected);
       this.platform.log.debug('Triggering motionSensorTwoService:', !motionDetected);
     }, 10000);
+
+    // create handlers for required characteristics
+    this.service.getCharacteristic(this.platform.Characteristic.LockCurrentState)
+      .onGet(this.handleLockCurrentStateGet.bind(this));
+
+    this.service.getCharacteristic(this.platform.Characteristic.LockTargetState)
+      .onGet(this.handleLockTargetStateGet.bind(this))
+      .onSet(this.handleLockTargetStateSet.bind(this));
   }
 
+  /**
+   * Handle requests to get the current value of the "Lock Current State" characteristic
+   */
+  handleLockCurrentStateGet() {
+    this.platform.log.debug('Triggered GET LockCurrentState');
+
+    // set this to a valid value for LockCurrentState
+    const currentValue = this.platform.Characteristic.LockCurrentState.UNSECURED;
+
+    return currentValue;
+  }
+
+
+  /**
+   * Handle requests to get the current value of the "Lock Target State" characteristic
+   */
+  handleLockTargetStateGet() {
+    this.platform.log.debug('Triggered GET LockTargetState');
+
+    // set this to a valid value for LockTargetState
+    const currentValue = this.platform.Characteristic.LockTargetState.UNSECURED;
+
+    return currentValue;
+  }
+
+  /**
+   * Handle requests to set the "Lock Target State" characteristic
+   */
+  handleLockTargetStateSet(value: CharacteristicValue) {
+    this.platform.log.debug('Triggered SET LockTargetState:', value);
+  }
+  
   /**
    * Handle "SET" requests from HomeKit
    * These are sent when the user changes the state of an accessory, for example, turning on a Light bulb.
