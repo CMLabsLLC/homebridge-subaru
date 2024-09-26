@@ -1,7 +1,9 @@
-import type { API, Characteristic, DynamicPlatformPlugin, Logging, PlatformAccessory, PlatformConfig, Service } from 'homebridge';
+import type { API, Characteristic, DynamicPlatformPlugin, Logging, PlatformAccessory, Service } from 'homebridge';
 
 import { SubaruPlatformLockAccessory } from './subaruPlatformLockAccessory.js';
 import { PLATFORM_NAME, PLUGIN_NAME } from './settings.js';
+import { SubaruHomebridgePlatformConfig } from './SubaruHomebridgePlatformConfig.js';
+import { SubaruAPI } from './subaruAPI.js';
 
 /**
  * HomebridgePlatform
@@ -11,17 +13,40 @@ import { PLATFORM_NAME, PLUGIN_NAME } from './settings.js';
 export class SubaruHomebridgePlatform implements DynamicPlatformPlugin {
   public readonly Service: typeof Service;
   public readonly Characteristic: typeof Characteristic;
+  public readonly subaruAPI: SubaruAPI;
 
   // this is used to track restored cached accessories
   public readonly accessories: PlatformAccessory[] = [];
 
   constructor(
     public readonly log: Logging,
-    public readonly config: PlatformConfig,
+    public readonly config: SubaruHomebridgePlatformConfig,
     public readonly api: API,
   ) {
     this.Service = api.hap.Service;
     this.Characteristic = api.hap.Characteristic;
+
+    if (!config.username) {
+      this.log.error('Missing required config value: username');
+    }
+
+    if (!config.password) {
+      this.log.error('Missing required config value: password');
+    }
+
+    if (!config.lastSelectedVehicleKey) {
+      this.log.error('Missing required config value: lastSelectedVehicleKey');
+    }
+
+    if (!config.deviceId) {
+      this.log.error('Missing required config value: deviceId');
+    }
+
+    if (!config.pin) {
+      this.log.error('Missing required config value: pin');
+    }
+
+    this.subaruAPI = new SubaruAPI(this.config, this.log);
 
     this.log.debug('Finished initializing platform:', this.config.name);
 
@@ -88,7 +113,7 @@ export class SubaruHomebridgePlatform implements DynamicPlatformPlugin {
 
         // create the accessory handler for the restored accessory
         // this is imported from `platformAccessory.ts`
-        new SubaruPlatformLockAccessory(this, existingAccessory);
+        new SubaruPlatformLockAccessory(this, existingAccessory, this.subaruAPI);
 
         // it is possible to remove platform accessories at any time using `api.unregisterPlatformAccessories`, e.g.:
         // remove platform accessories when no longer present
@@ -107,7 +132,7 @@ export class SubaruHomebridgePlatform implements DynamicPlatformPlugin {
 
         // create the accessory handler for the newly create accessory
         // this is imported from `platformAccessory.ts`
-        new SubaruPlatformLockAccessory(this, accessory);
+        new SubaruPlatformLockAccessory(this, accessory, this.subaruAPI);
 
         // link the accessory to your platform
         this.api.registerPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [accessory]);
