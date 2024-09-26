@@ -107,13 +107,23 @@ https://www.mysubaru.com/login`,
 
   public async lock() {
     await this.login();
-    const requestConfig = {
-      data: {
-        pin: `${this.config.pin}`,
-        now: `${this.seconds_since_epoch()}`,
+
+    const data = qs.stringify({
+      'pin': this.config.pin || '',
+      'now': this.seconds_since_epoch(),
+    });
+
+    const config = {
+      method: 'post',
+      maxBodyLength: Infinity,
+      url: 'https://www.mysubaru.com/service/g2/lock/execute.json',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
       },
+      data : data,
     };
-    return await axios.post('https://www.mysubaru.com/service/g2/lock/execute.json', requestConfig.data, { withCredentials: true });
+
+    return await axios.request(config);
   }
 
   public async unlock() {
