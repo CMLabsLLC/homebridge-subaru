@@ -78,11 +78,13 @@ export class SubaruPlatformLockAccessory {
     case this.platform.Characteristic.LockTargetState.SECURED: {
       this.platform.subaruAPI.lock();
       this.lockCurrentState = this.platform.Characteristic.LockCurrentState.SECURED;
+      this.platform.log.success('${this.accessory.context.name} locked.');
       break;
     }
     case this.platform.Characteristic.LockTargetState.UNSECURED: {
       this.platform.subaruAPI.unlock();
       this.lockCurrentState = this.platform.Characteristic.LockCurrentState.UNSECURED;
+      this.platform.log.success('${this.accessory.context.name} unlocked.');
       break;
     }
     default: {
