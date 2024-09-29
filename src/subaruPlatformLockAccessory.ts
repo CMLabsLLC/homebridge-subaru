@@ -59,22 +59,7 @@ export class SubaruPlatformLockAccessory {
   handleLockCurrentStateSet(value: CharacteristicValue) {
     this.platform.log.debug('Triggered SET LockCurrentState:', value);
 
-    // switch (value) {
-    // case this.platform.Characteristic.LockCurrentState.SECURED: {
-    //   this.platform.subaruAPI.lock();
-    //   this.platform.log.success('${this.accessory.context.name} locked.');
-    //   break;
-    // }
-    // case this.platform.Characteristic.LockCurrentState.UNSECURED: {
-    //   this.platform.subaruAPI.unlock();
-    //   this.platform.log.success('${this.accessory.context.name} unlocked.');
-    //   break;
-    // }
-    // default: {
-    //   this.platform.log.error('Unknown value');
-    //   break;
-    // }
-    // }
+    this.lockCurrentState = value;
   }
 
   /**
@@ -99,17 +84,27 @@ export class SubaruPlatformLockAccessory {
     case this.platform.Characteristic.LockTargetState.SECURED: {
       this.platform.subaruAPI.lock();
       this.platform.log.success('Device locked.');
-      this.lockCurrentState = this.platform.Characteristic.LockCurrentState.SECURED;
+      this.service.setCharacteristic(
+        this.platform.Characteristic.LockCurrentState,
+        this.platform.Characteristic.LockCurrentState.SECURED,
+      );
       break;
     }
     case this.platform.Characteristic.LockTargetState.UNSECURED: {
       this.platform.subaruAPI.unlock();
       this.platform.log.success('Device unlocked.');
-      this.lockCurrentState = this.platform.Characteristic.LockCurrentState.UNSECURED;
+      this.service.setCharacteristic(
+        this.platform.Characteristic.LockCurrentState,
+        this.platform.Characteristic.LockCurrentState.UNSECURED,
+      );
       break;
     }
     default: {
       this.platform.log.error('Unknown value');
+      this.service.setCharacteristic(
+        this.platform.Characteristic.LockCurrentState,
+        this.platform.Characteristic.LockCurrentState.UNKNOWN,
+      );
       break;
     }
     }
