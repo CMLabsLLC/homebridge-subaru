@@ -2,7 +2,7 @@ import type { CharacteristicValue, PlatformAccessory, Service } from 'homebridge
 
 import type { SubaruHomebridgePlatform } from './subaruHomebridgePlatform.js';
 import { SubaruAPI } from './subaruAPI.js';
-import debounce from 'debounce';
+import pDebounce from 'p-debounce';
 /**
  * Platform Accessory
  * An instance of this class is created for each accessory your platform registers
@@ -74,12 +74,6 @@ export class SubaruPlatformLockAccessory {
     return this.lockTargetState || defaultValue;
   }
 
-  lock() {
-    this.platform.subaruAPI.lock();
-  }
-  unlock() {
-    this.platform.subaruAPI.unlock();
-  }
   /**
    * Handle requests to set the "Lock Target State" characteristic
    */
@@ -88,8 +82,7 @@ export class SubaruPlatformLockAccessory {
 
     switch (value) {
     case this.platform.Characteristic.LockTargetState.SECURED: {
-      debounce(this.lock, 200);
-      // debounce(this.platform.subaruAPI.lock(), 200);
+      pDebounce(this.platform.subaruAPI.lock, 200);
       this.platform.log.success('Device locked.');
       this.service.setCharacteristic(
         this.platform.Characteristic.LockCurrentState,
@@ -98,7 +91,7 @@ export class SubaruPlatformLockAccessory {
       break;
     }
     case this.platform.Characteristic.LockTargetState.UNSECURED: {
-      debounce(this.unlock, 200);
+      pDebounce(this.platform.subaruAPI.unlock, 200);
       this.platform.log.success('Device unlocked.');
       this.service.setCharacteristic(
         this.platform.Characteristic.LockCurrentState,
