@@ -36,7 +36,8 @@ export class SubaruPlatformLockAccessory {
 
     // create handlers for required characteristics
     this.service.getCharacteristic(this.platform.Characteristic.LockCurrentState)
-      .onGet(this.handleLockCurrentStateGet.bind(this));
+      .onGet(this.handleLockCurrentStateGet.bind(this))
+      .onSet(this.handleLockCurrentStateSet.bind(this));
 
     this.service.getCharacteristic(this.platform.Characteristic.LockTargetState)
       .onGet(this.handleLockTargetStateGet.bind(this))
@@ -55,6 +56,26 @@ export class SubaruPlatformLockAccessory {
     return this.lockCurrentState || defaultValue;
   }
 
+  handleLockCurrentStateSet(value: CharacteristicValue) {
+    this.platform.log.debug('Triggered SET LockCurrentState:', value);
+
+    // switch (value) {
+    // case this.platform.Characteristic.LockCurrentState.SECURED: {
+    //   this.platform.subaruAPI.lock();
+    //   this.platform.log.success('${this.accessory.context.name} locked.');
+    //   break;
+    // }
+    // case this.platform.Characteristic.LockCurrentState.UNSECURED: {
+    //   this.platform.subaruAPI.unlock();
+    //   this.platform.log.success('${this.accessory.context.name} unlocked.');
+    //   break;
+    // }
+    // default: {
+    //   this.platform.log.error('Unknown value');
+    //   break;
+    // }
+    // }
+  }
 
   /**
    * Handle requests to get the current value of the "Lock Target State" characteristic
@@ -77,12 +98,12 @@ export class SubaruPlatformLockAccessory {
     switch (value) {
     case this.platform.Characteristic.LockTargetState.SECURED: {
       this.platform.subaruAPI.lock();
-      this.platform.log.success('${this.accessory.context.name} locked.');
+      this.platform.log.success('Device locked.');
       break;
     }
     case this.platform.Characteristic.LockTargetState.UNSECURED: {
       this.platform.subaruAPI.unlock();
-      this.platform.log.success('${this.accessory.context.name} unlocked.');
+      this.platform.log.success('Device unlocked.');
       break;
     }
     default: {
