@@ -2,7 +2,6 @@ import type { CharacteristicValue, PlatformAccessory, Service } from 'homebridge
 
 import type { SubaruHomebridgePlatform } from './subaruHomebridgePlatform.js';
 import { SubaruAPI } from './subaruAPI.js';
-import pDebounce from 'p-debounce';
 /**
  * Platform Accessory
  * An instance of this class is created for each accessory your platform registers
@@ -82,7 +81,7 @@ export class SubaruPlatformLockAccessory {
 
     switch (value) {
     case this.platform.Characteristic.LockTargetState.SECURED: {
-      pDebounce(this.platform.subaruAPI.lock, 200);
+      this.platform.subaruAPI.lock();
       this.platform.log.success('Device locked.');
       this.service.setCharacteristic(
         this.platform.Characteristic.LockCurrentState,
@@ -91,7 +90,7 @@ export class SubaruPlatformLockAccessory {
       break;
     }
     case this.platform.Characteristic.LockTargetState.UNSECURED: {
-      pDebounce(this.platform.subaruAPI.unlock, 200);
+      this.platform.subaruAPI.unlock();
       this.platform.log.success('Device unlocked.');
       this.service.setCharacteristic(
         this.platform.Characteristic.LockCurrentState,
