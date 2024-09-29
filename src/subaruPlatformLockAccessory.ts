@@ -1,4 +1,4 @@
-import type { CharacteristicValue, PlatformAccessory, Service, VoidCallback } from 'homebridge';
+import type { CharacteristicValue, PlatformAccessory, Service } from 'homebridge';
 
 import type { SubaruHomebridgePlatform } from './subaruHomebridgePlatform.js';
 import { SubaruAPI } from './subaruAPI.js';
