@@ -11,12 +11,15 @@ export class SubaruPlatformLockAccessory {
   private service: Service;
   private lockCurrentState?: CharacteristicValue;
   private lockTargetState?: CharacteristicValue;
+  private isLoading: boolean;
 
   constructor(
     private readonly platform: SubaruHomebridgePlatform,
     private readonly accessory: PlatformAccessory,
     private readonly subaruAPI: SubaruAPI,
   ) {
+    this.isLoading = false;
+
     // set accessory information
     this.accessory.getService(this.platform.Service.AccessoryInformation)!
       .setCharacteristic(this.platform.Characteristic.Manufacturer, 'C&M Labs LLC')
@@ -77,11 +80,17 @@ export class SubaruPlatformLockAccessory {
    * Handle requests to set the "Lock Target State" characteristic
    */
   handleLockTargetStateSet(value: CharacteristicValue) {
+    if (this.isLoading) {
+      this.platform.log.debug('Ignoring handleLockTargetStateSet. isLoading: ', this.isLoading);
+      return;
+    }
     this.platform.log.debug('Triggered SET LockTargetState:', value);
 
     switch (value) {
     case this.platform.Characteristic.LockTargetState.SECURED: {
+      this.isLoading = true;
       this.platform.subaruAPI.lock();
+      this.isLoading = false;
       this.platform.log.success('Device locked.');
       this.service.setCharacteristic(
         this.platform.Characteristic.LockCurrentState,
@@ -90,7 +99,9 @@ export class SubaruPlatformLockAccessory {
       break;
     }
     case this.platform.Characteristic.LockTargetState.UNSECURED: {
+      this.isLoading = true;
       this.platform.subaruAPI.unlock();
+      this.isLoading = false;
       this.platform.log.success('Device unlocked.');
       this.service.setCharacteristic(
         this.platform.Characteristic.LockCurrentState,
@@ -99,7 +110,7 @@ export class SubaruPlatformLockAccessory {
       break;
     }
     default: {
-      this.platform.log.error('Unknown value');
+      this.platform.log.error('Unknown value:', value);
       this.service.setCharacteristic(
         this.platform.Characteristic.LockCurrentState,
         this.platform.Characteristic.LockCurrentState.UNKNOWN,
