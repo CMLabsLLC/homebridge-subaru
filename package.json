@@ -2,7 +2,7 @@
   "name": "homebridge-subaru",
   "displayName": "Homebridge Subaru",
   "type": "module",
-  "version": "0.0.18",
+  "version": "0.0.19",
   "description": "Exposes basic starlink funcationality to homekit",
   "author": "Russell Stephens",
   "license": "Apache-2.0",
