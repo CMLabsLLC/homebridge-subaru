@@ -73,7 +73,7 @@ export class SubaruPlatformLockAccessory {
    */
   handleLockTargetStateSet(value: CharacteristicValue) {
     this.platform.log.debug('Triggered SET LockTargetState:', value);
-    this.lockTargetState = value;
+
     switch (value) {
     case this.platform.Characteristic.LockTargetState.SECURED: {
       this.platform.subaruAPI.lock();
