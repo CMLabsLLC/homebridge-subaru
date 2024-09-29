@@ -84,8 +84,10 @@ export class SubaruPlatformLockAccessory {
       this.platform.log.debug('Ignoring handleLockTargetStateSet. isLoading: ', this.isLoading);
       return;
     }
-    if (this.lockCurrentState?.valueOf() === this.lockTargetState?.valueOf()) {
+    if (this.lockCurrentState?.valueOf() === value.valueOf()) {
       this.platform.log.debug('Target state is already current state, ignoring.');
+      this.platform.log.debug('this.lockCurrentState: ', this.lockCurrentState);
+      this.platform.log.debug('handleLockTargetStateSet(value): ', value);
       return;
     }
     this.platform.log.debug('Triggered SET LockTargetState:', value);
