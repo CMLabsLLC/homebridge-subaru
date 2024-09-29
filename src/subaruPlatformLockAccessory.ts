@@ -1,7 +1,7 @@
-import { CharacteristicValue, PlatformAccessory, Service, Logging } from 'homebridge';
+import type { CharacteristicValue, PlatformAccessory, Service } from 'homebridge';
 
 import type { SubaruHomebridgePlatform } from './subaruHomebridgePlatform.js';
-
+import { SubaruAPI } from './subaruAPI.js';
 /**
  * Platform Accessory
  * An instance of this class is created for each accessory your platform registers
@@ -9,21 +9,37 @@ import type { SubaruHomebridgePlatform } from './subaruHomebridgePlatform.js';
  */
 export class SubaruPlatformLockAccessory {
   private service: Service;
-  private currentKnownState: CharacteristicValue;
+  private lockCurrentState?: CharacteristicValue;
+  private lockTargetState?: CharacteristicValue;
+  private isLoading: boolean;
 
   constructor(
     private readonly platform: SubaruHomebridgePlatform,
     private readonly accessory: PlatformAccessory,
-    public readonly log: Logging,
+    private readonly subaruAPI: SubaruAPI,
   ) {
-    this.currentKnownState = this.platform.Characteristic.LockCurrentState.UNKNOWN;
+    this.isLoading = false;
 
-    // create a new Lock Mechanism service
-    this.service = new this.platform.Service('SubaruCarLockMechanism', this.platform.serviceUUID());
+    // set accessory information
+    this.accessory.getService(this.platform.Service.AccessoryInformation)!
+      .setCharacteristic(this.platform.Characteristic.Manufacturer, 'C&M Labs LLC')
+      .setCharacteristic(this.platform.Characteristic.Model, 'homebridge-subaru');
+
+    // each service must implement at-minimum the "required characteristics" for the given service type
+    // see https://developers.homebridge.io/#/service/LockMechanism
+
+    // get the LockMechanism service if it exists, otherwise create a new LockMechanism service
+    // you can create multiple services for each accessory
+    this.service = this.accessory.getService(this.platform.Service.LockMechanism) || this.accessory.addService(this.platform.Service.LockMechanism);
+
+    // set the service name, this is what is displayed as the default name on the Home app
+    // in this example we are using the name we stored in the `accessory.context` in the `discoverDevices` method.
+    this.service.setCharacteristic(this.platform.Characteristic.Name, accessory.context.device.name);
 
     // create handlers for required characteristics
     this.service.getCharacteristic(this.platform.Characteristic.LockCurrentState)
-      .onGet(this.handleLockCurrentStateGet.bind(this));
+      .onGet(this.handleLockCurrentStateGet.bind(this))
+      .onSet(this.handleLockCurrentStateSet.bind(this));
 
     this.service.getCharacteristic(this.platform.Characteristic.LockTargetState)
       .onGet(this.handleLockTargetStateGet.bind(this))
@@ -31,43 +47,80 @@ export class SubaruPlatformLockAccessory {
   }
 
   /**
- * Handle requests to get the current value of the "Lock Current State" characteristic
- */
+   * Handle requests to get the current value of the "Lock Current State" characteristic
+   */
   handleLockCurrentStateGet() {
-    this.log.debug('Triggered GET LockCurrentState');
+    this.platform.log.debug('Triggered GET LockCurrentState');
 
     // set this to a valid value for LockCurrentState
-    const currentValue = this.platform.Characteristic.LockCurrentState.UNKNOWN;
+    const defaultValue = this.platform.Characteristic.LockCurrentState.UNSECURED;
 
-    return currentValue;
+    return this.lockCurrentState || defaultValue;
   }
 
+  handleLockCurrentStateSet(value: CharacteristicValue) {
+    this.platform.log.debug('Triggered SET LockCurrentState:', value);
+
+    this.lockCurrentState = value;
+  }
 
   /**
- * Handle requests to get the current value of the "Lock Target State" characteristic
- */
+   * Handle requests to get the current value of the "Lock Target State" characteristic
+   */
   handleLockTargetStateGet() {
-    return this.currentKnownState;
+    this.platform.log.debug('Triggered GET LockTargetState');
+
+    // set this to a valid value for LockCurrentState
+    const defaultValue = this.platform.Characteristic.LockTargetState.UNSECURED;
+
+    return this.lockTargetState || defaultValue;
   }
 
   /**
- * Handle requests to set the "Lock Target State" characteristic
- */
+   * Handle requests to set the "Lock Target State" characteristic
+   */
   handleLockTargetStateSet(value: CharacteristicValue) {
-    this.log.debug('Triggered SET LockTargetState:', value);
+    if (this.isLoading) {
+      this.platform.log.debug('Ignoring handleLockTargetStateSet. isLoading: ', this.isLoading);
+      return;
+    }
+    if (this.lockCurrentState?.valueOf() === value.valueOf()) {
+      this.platform.log.debug('Target state is already current state, ignoring.');
+      this.platform.log.debug('this.lockCurrentState: ', this.lockCurrentState);
+      this.platform.log.debug('handleLockTargetStateSet(value): ', value);
+      return;
+    }
+    this.platform.log.debug('Triggered SET LockTargetState:', value);
+
     switch (value) {
     case this.platform.Characteristic.LockTargetState.SECURED: {
+      this.isLoading = true;
       this.platform.subaruAPI.lock();
-      this.currentKnownState = value;
+      this.isLoading = false;
+      this.platform.log.success('Device locked.');
+      this.service.setCharacteristic(
+        this.platform.Characteristic.LockCurrentState,
+        this.platform.Characteristic.LockCurrentState.SECURED,
+      );
       break;
     }
     case this.platform.Characteristic.LockTargetState.UNSECURED: {
+      this.isLoading = true;
       this.platform.subaruAPI.unlock();
-      this.currentKnownState = value;
+      this.isLoading = false;
+      this.platform.log.success('Device unlocked.');
+      this.service.setCharacteristic(
+        this.platform.Characteristic.LockCurrentState,
+        this.platform.Characteristic.LockCurrentState.UNSECURED,
+      );
       break;
     }
     default: {
-      this.log.error('Unknown value');
+      this.platform.log.error('Unknown value:', value);
+      this.service.setCharacteristic(
+        this.platform.Characteristic.LockCurrentState,
+        this.platform.Characteristic.LockCurrentState.UNKNOWN,
+      );
       break;
     }
     }

@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { SubaruHomebridgePlatformConfig } from './subaruHomebridgePlatform';
+import { SubaruHomebridgePlatformConfig } from './SubaruHomebridgePlatformConfig';
 import { Logging } from 'homebridge';
 import qs from 'qs';
 import child_process from 'child_process';
