@@ -27,6 +27,10 @@ export class SubaruHomebridgePlatform implements DynamicPlatformPlugin {
     this.Service = api.hap.Service;
     this.Characteristic = api.hap.Characteristic;
 
+    if (!config.name) {
+      this.log.error('Missing required config value: name');
+    }
+
     if (!config.username) {
       this.log.error('Missing required config value: username');
     }
@@ -83,7 +87,7 @@ export class SubaruHomebridgePlatform implements DynamicPlatformPlugin {
 
     const existingAccessory = this.accessories.find(accessory => accessory.UUID === uuid);
 
-    const deviceName = this.config.name || 'Subaru Door Lock';
+    const deviceName = this.config.name || '';
 
     const device = {
       name: deviceName,
