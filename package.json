@@ -17,7 +17,10 @@
   "keywords": [
     "homebridge-plugin",
     "subaru",
-    "starlink"
+    "starlink",
+    "homebridge plugin",
+    "homebridge subaru",
+    "homebridge subaru starlink"
   ],
   "main": "dist/index.js",
   "engines": {
