@@ -83,7 +83,7 @@ export class SubaruHomebridgePlatform implements DynamicPlatformPlugin {
 
     const existingAccessory = this.accessories.find(accessory => accessory.UUID === uuid);
 
-    const deviceName = 'Subaru Door Lock';
+    const deviceName = this.config.name || 'Subaru Door Lock';
 
     const device = {
       name: deviceName,

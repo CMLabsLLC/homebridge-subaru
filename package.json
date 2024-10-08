@@ -2,7 +2,7 @@
   "name": "homebridge-subaru",
   "displayName": "Homebridge Subaru",
   "type": "module",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Exposes basic starlink funcationality to homekit",
   "author": "Russell Stephens",
   "license": "Apache-2.0",
@@ -15,7 +15,9 @@
     "url": "https://github.com/CMLabsLLC/homebridge-subaru/issues"
   },
   "keywords": [
-    "homebridge-plugin"
+    "homebridge-plugin",
+    "subaru",
+    "starlink"
   ],
   "main": "dist/index.js",
   "engines": {
