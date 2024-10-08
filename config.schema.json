@@ -5,6 +5,12 @@
   "schema": {
     "type": "object",
     "properties": {
+      "name": {
+        "title": "name",
+        "type": "string",
+        "required": false,
+        "default": "Car Lock"
+      },
       "username": {
         "title": "username",
         "type": "string",
