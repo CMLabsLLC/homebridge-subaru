@@ -15,7 +15,9 @@
     "url": "https://github.com/CMLabsLLC/homebridge-subaru/issues"
   },
   "keywords": [
-    "homebridge-plugin"
+    "homebridge-plugin",
+    "subaru",
+    "starlink"
   ],
   "main": "dist/index.js",
   "engines": {
